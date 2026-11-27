@@ -38,7 +38,8 @@ monitor_pid=$EVENTS_PID
 exec {events_fd}<&"${EVENTS[0]}"
 trap 'kill "$monitor_pid" 2>/dev/null || true' EXIT
 sync_plugin
-while IFS= read -r -u "$events_fd"; do
+while IFS= read -r -u "$events_fd" event; do
+    [[ $event == ./SpotlightLabels.qml ]] && continue
     while IFS= read -r -t 0.2 -u "$events_fd"; do :; done
     sync_plugin || echo 'Sync failed. Waiting for the next edit.' >&2
 done

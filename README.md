@@ -13,6 +13,8 @@ omarchy bar put grainfire.privacy-spotlight --section right
 
 The script compiles the translation catalogs into static QML, validates the source, mirrors the runtime files to the plugin directory and validates the installed copy. It deletes stale files there. For development, `./dev-sync.sh --watch` batches runtime-file changes and queues saves made during a sync.
 
+The bar entry enables the plugin. Removing the icon also disables its shortcut unless you keep an entry such as `{"id": "grainfire.privacy-spotlight"}` in the top-level `plugins[]` array of `shell.json`. Add that entry to use the keyboard shortcut without a bar icon.
+
 ## Controls
 
 Left-click the bar icon to toggle. Right-click for **Circle** or **Band** and four sizes. Scroll up or down on the icon to change size even when the overlay is off. The popup shows the actual radius or half-height in logical pixels. A custom value highlights the nearest size (the smaller size wins a tie). Opening the popup preserves the value. Clicking the highlighted size explicitly selects its preset.

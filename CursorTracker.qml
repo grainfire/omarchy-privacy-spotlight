@@ -94,29 +94,41 @@ Item {
         id: discovery
         active: false
         sourceComponent: Item {
+            id: scan
+            function selectInstance() {
+                if (folders.status !== FolderListModel.Ready) return
+                const display = Quickshell.env("WAYLAND_DISPLAY").split("/").pop()
+                let best = null
+                for (let i = 0; i < folders.count; i++) {
+                    const name = folders.get(i, "fileName")
+                    if (name === tracker.instance) continue
+                    reader.path = folders.get(i, "filePath") + "/hyprland.lock"
+                    const lines = reader.text().trim().split("\n")
+                    if (lines.length < 2 || lines[1].trim() !== display) continue
+                    const pid = lines[0].trim()
+                    if (!/^[1-9][0-9]*$/.test(pid)) continue
+                    reader.path = "/proc/" + pid + "/comm"
+                    const live = reader.text().trim().length > 0
+                    const stamp = /_(\d+)_(\d+)$/.exec(name)
+                    const seconds = stamp ? Number(stamp[1]) : 0
+                    const fraction = stamp ? Number(stamp[2]) : 0
+                    if (!best || live > best.live || (live === best.live &&
+                            (seconds > best.seconds || (seconds === best.seconds && fraction > best.fraction)))) {
+                        best = {name, live, seconds, fraction}
+                    }
+                }
+                if (best) tracker.instance = best.name
+                discovery.active = false
+            }
+            FileView { id: reader; preload: false; blockAllReads: true; printErrors: false }
             FolderListModel {
                 id: folders
                 folder: "file://" + Quickshell.env("XDG_RUNTIME_DIR") + "/hypr"
                 showFiles: false
                 showDotAndDotDot: false
+                onStatusChanged: if (status === FolderListModel.Ready) Qt.callLater(scan.selectInstance)
             }
-            Repeater {
-                model: folders
-                Item {
-                    id: candidate
-                    required property string fileName
-                    required property string filePath
-                    FileView {
-                        path: candidate.filePath + "/hyprland.lock"
-                        printErrors: false
-                        onLoaded: {
-                            const display = Quickshell.env("WAYLAND_DISPLAY").split("/").pop()
-                            if (text().split("\n")[1] === display)
-                                tracker.instance = candidate.fileName
-                        }
-                    }
-                }
-            }
+            // Release the scan even if the runtime directory disappears.
             Timer { interval: 500; running: true; onTriggered: discovery.active = false }
         }
     }

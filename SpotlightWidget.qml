@@ -10,7 +10,10 @@ BarWidget {
     readonly property string pluginId: "grainfire.privacy-spotlight"
     readonly property bool lit: bar?.shell?.isPluginOpen(pluginId) ?? false
     readonly property string shape: setting("shape", "circle") === "band" ? "band" : "circle"
-    readonly property real radius: Number.isFinite(setting("radius", 120)) ? setting("radius", 120) : 120
+    readonly property real radius: {
+        const value = setting("radius", 120)
+        return Number.isFinite(value) ? Math.max(4, Math.min(2048, value)) : 120
+    }
     readonly property var steps: shape === "band" ? [60, 100, 150, 200] : [120, 180, 240, 320]
     readonly property int nearest: {
         let index = 0
@@ -18,6 +21,7 @@ BarWidget {
             if (Math.abs(steps[i] - radius) < Math.abs(steps[index] - radius)) index = i
         return index
     }
+    property int wheelRemainder: 0
     property bool editing: false
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
@@ -44,7 +48,8 @@ BarWidget {
             text: "󰓈"
             foreground: "transparent"
             labelVisible: false
-            fixedWidth: Style.bar.iconSlot
+            fixedWidth: root.vertical ? -1 : Style.bar.iconSlot
+            fixedHeight: root.vertical ? Style.bar.iconSlot : -1
             OpticalGlyph {
                 anchors.centerIn: parent
                 width: Style.bar.iconCanvas
@@ -66,8 +71,17 @@ BarWidget {
             }
             onWheelMoved: delta => {
                 if (!delta) return
-                const index = Math.max(0, Math.min(3, root.nearest + Math.sign(delta)))
-                if (index !== root.nearest) root.save("radius", root.steps[index])
+                const direction = Math.sign(delta)
+                if (Math.sign(root.wheelRemainder) !== direction) root.wheelRemainder = 0
+                const total = root.wheelRemainder + delta
+                const notches = Math.floor(Math.abs(total) / 120)
+                root.wheelRemainder = total % 120
+                let index = root.nearest
+                for (let i = 0; i < notches; i++) {
+                    index += direction
+                    if (index < 0 || index >= root.steps.length) break
+                    root.save("radius", root.steps[index])
+                }
             }
         }
     }
@@ -79,6 +93,7 @@ BarWidget {
             bar: root.bar
             owner: root
             open: true
+            Component.onCompleted: if (root.bar) root.bar.requestPopout(coordinatorKey)
             Component.onDestruction: if (root.bar?.activePopout === root) root.bar.releasePopout(root)
             contentWidth: fittedContentWidth(Math.max(Style.space(220), choices.implicitWidth, sizes.implicitWidth, caption.implicitWidth) + 2 * padding + Style.space(6))
             contentHeight: fittedContentHeight(column.implicitHeight)
@@ -104,6 +119,7 @@ BarWidget {
                         hoverEnabled: true
                         onClicked: group.changed(modelData.value)
                         background: Rectangle {
+                            radius: Style.cornerRadius
                             color: choice.selected ? Commons.Color.popups.text : Commons.Color.popups.background
                             border.color: Commons.Color.popups.border
                             border.width: choice.visualFocus || choice.hovered ? 2 : 1
