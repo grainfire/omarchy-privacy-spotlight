@@ -6,8 +6,8 @@ import Quickshell.Wayland
 Item {
     id: root
     SettingsFile { id: config }
-    SessionVisibility { id: session }
-    CursorTracker { id: tracker; tracking: session.awake }
+    IdleMonitor { id: idle; timeout: 10; respectInhibitors: false }
+    CursorTracker { id: tracker; tracking: !idle.isIdle }
     readonly property point pointer: tracker.pointer
     readonly property real radius: config.radius
     readonly property real feather: config.feather

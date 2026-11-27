@@ -1,3 +1,4 @@
+import Qt.labs.folderlistmodel
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -26,9 +27,9 @@ Item {
         cancel()
         pointer = Qt.point(-999999, -999999)
         if (!tracking) return
-        if (Date.now() - lastDiscovery > 2000 && !discover.running) {
+        if (Date.now() - lastDiscovery > 2000 && !discovery.active) {
             lastDiscovery = Date.now()
-            discover.running = true
+            discovery.active = true
         }
         schedule(125)
     }
@@ -68,8 +69,11 @@ Item {
 
     onTrackingChanged: {
         cancel()
-        pointer = Qt.point(-999999, -999999)
-        if (tracking) schedule(1)
+        discovery.active = false
+        if (tracking) {
+            lastMove = Date.now()
+            schedule(1)
+        }
     }
     Component.onCompleted: if (tracking) schedule(1)
     Timer { id: next; onTriggered: tracker.request() }
@@ -84,17 +88,36 @@ Item {
             parser: SplitParser { splitMarker: "}"; onRead: data => tracker.received(data) }
         }
     }
-    Process {
-        id: discover
-        command: ["hyprctl", "-j", "instances"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const display = Quickshell.env("WAYLAND_DISPLAY").split("/").pop()
-                    const match = JSON.parse(text).find(row => row.wl_socket === display)
-                    if (match && /^[a-zA-Z0-9_-]+$/.test(match.instance)) tracker.instance = match.instance
-                } catch (error) { /* Compositor may still be starting. */ }
+    // Only inspect instance lock files on transport failure. The second
+    // line identifies the Wayland display (also used by hyprctl instances).
+    Loader {
+        id: discovery
+        active: false
+        sourceComponent: Item {
+            FolderListModel {
+                id: folders
+                folder: "file://" + Quickshell.env("XDG_RUNTIME_DIR") + "/hypr"
+                showFiles: false
+                showDotAndDotDot: false
             }
+            Repeater {
+                model: folders
+                Item {
+                    id: candidate
+                    required property string fileName
+                    required property string filePath
+                    FileView {
+                        path: candidate.filePath + "/hyprland.lock"
+                        printErrors: false
+                        onLoaded: {
+                            const display = Quickshell.env("WAYLAND_DISPLAY").split("/").pop()
+                            if (text().split("\n")[1] === display)
+                                tracker.instance = candidate.fileName
+                        }
+                    }
+                }
+            }
+            Timer { interval: 500; running: true; onTriggered: discovery.active = false }
         }
     }
 }

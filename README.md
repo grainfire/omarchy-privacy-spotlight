@@ -1,20 +1,28 @@
 # Privacy Spotlight
 
-Privacy Spotlight 2.0 for Omarchy keeps a soft-edged circle or a horizontal reading band clear around the pointer. Every other output stays black. Clicks, scrolling and typing reach the app underneath. Notifications remain visible and display captures include the overlay.
+A click-through privacy overlay for Omarchy. A feathered circle or horizontal band follows the pointer. Other outputs stay black. Notifications remain visible, and screen captures include the spotlight.
 
-## Install or update
+## Install
 
-From this checkout run `./dev-sync.sh`, then place the widget on the bar:
+Run these commands from the repository:
 
 ```sh
-omarchy bar put grainfire.privacy-spotlight --section right --after stappmus.activity-monitor
+./dev-sync.sh
+omarchy bar put grainfire.privacy-spotlight --section right
 ```
 
-The sync script validates the source and installed copy, backs up replaced runtime files beside them, and removes obsolete QML and catalog files. Use `./dev-sync.sh --watch` for local development.
+The script compiles the translation catalogs into static QML, validates the source, mirrors the runtime files to the plugin directory and validates the installed copy. It deletes stale files there. For development, `./dev-sync.sh --watch` batches runtime-file changes and queues saves made during a sync.
 
 ## Controls
 
-Left-click the spotlight icon to toggle. Full brightness means on. Right-click for Circle or Reading band and the size and feather sliders. A slider saves on release or a wheel step. The bar, shortcut and IPC share the shell's overlay-open state.
+Left-click the bar icon to toggle. Right-click for **Circle** or **Band** and four sizes. Scroll up or down on the icon to change size even when the overlay is off. The popup shows the actual radius or half-height in logical pixels. A custom value highlights the nearest size (the smaller size wins a tie). Opening the popup preserves the value. Clicking the highlighted size explicitly selects its preset.
+
+| Size | S | M | L | XL |
+|---|---:|---:|---:|---:|
+| Circle radius | 120 | 180 | 240 | 320 |
+| Band half-height | 60 | 100 | 150 | 200 |
+
+Shape changes preserve the numeric size until you choose a preset or scroll. The shell saves changes in-process to the widget's bar-layout entry. The icon follows the same open state as IPC and the keyboard shortcut.
 
 ```sh
 omarchy-shell shell toggle grainfire.privacy-spotlight '{}'
@@ -28,19 +36,19 @@ o.bind("SUPER + CTRL + ALT + SHIFT + P", "Privacy Spotlight", "omarchy-shell she
 
 ## Settings
 
-The popup uses Omarchy's bar settings writer. Values live in the widget's entry in `bar.layout` in `$XDG_CONFIG_HOME/omarchy/shell.json` (default `~/.config/omarchy/shell.json`). A bar value overrides the same key in a v1 `plugins[]` entry. Existing v1 overrides continue to apply to other keys.
+In the widget's entry in `bar.layout` in `$XDG_CONFIG_HOME/omarchy/shell.json` (default `~/.config/omarchy/shell.json`):
 
 | Key | Meaning | Default | Accepted values |
 |---|---|---|---|
 | shape | Clear region | circle | circle, band |
-| radius | Circle radius or band half-height in logical pixels | 120 | 4–2048 |
-| feather | Additional edge fade in logical pixels | 32 | 0–1024 |
+| radius | Circle radius or band half-height in logical pixels | 120 | 4–2048, including custom values |
+| feather | Advanced setting for edge fade in logical pixels | 32 | 0–1024 |
 
-## Tracking
+## Tracking and idle
 
-While open and visible, the overlay requests logical pointer coordinates from Hyprland's IPC socket. It waits 17 ms between successful requests, increasing to 125 ms after one second without movement. Invalid or stalled requests reset the transport, black out the last opening and retry. On failure it rediscovers the Hyprland instance for the current Wayland display.
+The overlay polls Hyprland's cursor socket every 17 ms during motion and every 125 ms after a second without movement. After 10 seconds without seat input, Quickshell's Wayland IdleMonitor stops the timer and releases the socket. The opening stays in place for reading. Input resumes tracking immediately. Idle inhibitors from video players do not delay suspension. Typing on a lock screen can briefly resume polling.
 
-An event-driven Python 3 standard-library listener subscribes to Hyprland lock notifications and Wayland output power changes. The cursor timer and connection stop while locked or while every output is off. Closing the spotlight unloads the overlay and listener. The bar icon stays available.
+Turning the spotlight off unloads its overlay, IdleMonitor, cursor tracker and settings reader. The bar icon uses the settings supplied by the host. The plugin starts no helper processes.
 
 ## License
 
