@@ -1,56 +1,95 @@
 # Privacy Spotlight
 
-A click-through privacy overlay for Omarchy. A feathered circle or horizontal band follows the pointer. Other outputs stay black. Notifications remain visible, and screen captures include the spotlight.
+A privacy overlay for [Omarchy](https://omarchy.org). It blacks out your screens except for a soft circle (or a horizontal reading band) that follows your mouse pointer, so people looking over your shoulder can't read what's on your screen.
+
+- Clicks, scrolling and typing pass straight through to your apps.
+- Covers every monitor. Notifications still show on top.
+- Uses nothing while it's off: no processes, timers or watchers.
+- On an OLED screen, the blacked-out area is fully off.
+
+## Requirements
+
+- Omarchy 4.6 or later (Hyprland)
 
 ## Install
 
-Run these commands from the repository:
+```sh
+omarchy plugin add https://github.com/grainfire/omarchy-privacy-spotlight.git --enable
+```
+
+This adds a spotlight icon to the right side of your bar. If it doesn't appear, put it there with:
 
 ```sh
-./dev-sync.sh
 omarchy bar put grainfire.privacy-spotlight --section right
 ```
 
-The script compiles the translation catalogs into static QML, validates the source, mirrors the runtime files to the plugin directory and validates the installed copy. It deletes stale files there. For development, `./dev-sync.sh --watch` batches runtime-file changes and queues saves made during a sync.
+### Keyboard shortcut (optional)
 
-The bar entry enables the plugin. Removing the icon also disables its shortcut unless you keep an entry such as `{"id": "grainfire.privacy-spotlight"}` in the top-level `plugins[]` array of `shell.json`. Add that entry to use the keyboard shortcut without a bar icon.
-
-## Controls
-
-Left-click the bar icon to toggle. Right-click for **Circle** or **Band** and four sizes. Scroll up or down on the icon to change size even when the overlay is off. The popup shows the actual radius or half-height in logical pixels. A custom value highlights the nearest size (the smaller size wins a tie). Opening the popup preserves the value. Clicking the highlighted size explicitly selects its preset.
-
-| Size | S | M | L | XL |
-|---|---:|---:|---:|---:|
-| Circle radius | 120 | 180 | 240 | 320 |
-| Band half-height | 60 | 100 | 150 | 200 |
-
-Shape changes preserve the numeric size until you choose a preset or scroll. The shell saves changes in-process to the widget's bar-layout entry. The icon follows the same open state as IPC and the keyboard shortcut.
-
-```sh
-omarchy-shell shell toggle grainfire.privacy-spotlight '{}'
-```
-
-Example Hyprland binding:
+Add a binding to `~/.config/hypr/bindings.lua`, using any key combination that's free on your system, for example:
 
 ```lua
 o.bind("SUPER + CTRL + ALT + SHIFT + P", "Privacy Spotlight", "omarchy-shell shell toggle grainfire.privacy-spotlight '{}'")
 ```
 
+The plugin is enabled by its bar icon. If you remove the icon from the bar, the shortcut stops working too. To use the shortcut without the icon, add `{ "id": "grainfire.privacy-spotlight" }` to the top-level `plugins` array in `~/.config/omarchy/shell.json`.
+
+## Use
+
+| Action | What it does |
+|---|---|
+| Left-click the icon | Turn the spotlight on or off |
+| Right-click the icon | Choose **Circle** or **Band** and a size (S, M, L, XL) |
+| Scroll on the icon | Make it bigger or smaller, whether it's on or off |
+| Your shortcut | Turn it on or off |
+
+The icon is bright while the spotlight is on and dimmed while it's off.
+
+| Size | S | M | L | XL |
+|---|---:|---:|---:|---:|
+| Circle radius (px) | 120 | 180 | 240 | 320 |
+| Band half-height (px) | 60 | 100 | 150 | 200 |
+
+Sizes are in logical pixels, so they look the same at any display scale.
+
+## Update and remove
+
+```sh
+omarchy plugin update grainfire.privacy-spotlight
+omarchy plugin remove grainfire.privacy-spotlight
+```
+
 ## Settings
 
-In the widget's entry in `bar.layout` in `$XDG_CONFIG_HOME/omarchy/shell.json` (default `~/.config/omarchy/shell.json`):
+Your choices are saved in the plugin's bar entry in `~/.config/omarchy/shell.json`. The right-click menu covers everything most people need; you can also edit them by hand:
 
-| Key | Meaning | Default | Accepted values |
+| Key | Meaning | Default | Values |
 |---|---|---|---|
-| shape | Clear region | circle | circle, band |
-| radius | Circle radius or band half-height in logical pixels | 120 | 4–2048, including custom values |
-| feather | Advanced setting for edge fade in logical pixels | 32 | 0–1024 |
+| `shape` | Shape of the clear area | `circle` | `circle`, `band` |
+| `radius` | Circle radius or band half-height, in logical pixels | `120` | 4–2048 |
+| `feather` | Width of the soft edge, in logical pixels | `32` | 0–1024 |
 
-## Tracking and idle
+## Battery use
 
-The overlay polls Hyprland's cursor socket every 17 ms during motion and every 125 ms after a second without movement. After 10 seconds without seat input, Quickshell's Wayland IdleMonitor stops the timer and releases the socket. The opening stays in place for reading. Input resumes tracking immediately. Idle inhibitors from video players do not delay suspension. Typing on a lock screen can briefly resume polling.
+- **Off:** nothing runs. Only the bar icon exists, inside the Omarchy shell.
+- **On:** the plugin asks Hyprland for the pointer position about 60 times a second while you move the mouse, and 8 times a second when it's still.
+- **After 10 seconds without any input** (reading, locked screen, display off), it stops checking completely and starts again the moment you touch the mouse or keyboard.
 
-Turning the spotlight off unloads its overlay, IdleMonitor, cursor tracker and settings reader. The bar icon uses the settings supplied by the host. The plugin starts no helper processes.
+## Limitations
+
+- It's a deterrent, not real security: someone behind you can still read what's inside the circle.
+- The overlay shows up in screen shares and screenshots. Turn it off before you share your screen.
+- The circle is drawn on the monitor the pointer is on; near the edge of a monitor it's cut off there.
+
+## Development
+
+Clone the repository anywhere and edit it there. `dev-sync.sh` copies the plugin's files into `~/.config/omarchy/plugins/grainfire.privacy-spotlight/`, where the shell reloads them straight away:
+
+```sh
+./dev-sync.sh          # sync once
+./dev-sync.sh --watch  # sync on every save (needs inotify-tools)
+```
+
+It also builds `SpotlightLabels.qml` from the translation files in `i18n/`, runs `omarchy plugin validate`, and removes files from the installed copy that are no longer in the repository. If you installed with `omarchy plugin add`, remove that copy first (`omarchy plugin remove grainfire.privacy-spotlight`).
 
 ## License
 
