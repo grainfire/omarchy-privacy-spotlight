@@ -1,86 +1,18 @@
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
-import Quickshell.Io
-import Quickshell.Hyprland
 import Quickshell.Wayland
-import qs.Commons as Commons
 
 Item {
     id: root
-    readonly property string pluginId: "grainfire.privacy-spotlight"
-    property var settings: ({})
-    property point pointer: Qt.point(-999999, -999999)
-    property double lastMove: 0
-    property double lastNotice: 0
-    readonly property real radius: bounded(settings.radius, 120, 4, 2048)
-    readonly property real feather: bounded(settings.feather, 32, 0, 1024)
+    SettingsFile { id: config }
+    SessionVisibility { id: session }
+    CursorTracker { id: tracker; tracking: session.awake }
+    readonly property point pointer: tracker.pointer
+    readonly property real radius: config.radius
+    readonly property real feather: config.feather
     readonly property real outer: radius + Math.max(0.01, feather)
-    readonly property bool band: settings.shape === "band"
-
-    function bounded(value, fallback, low, high) {
-        return typeof value === "number" && Number.isFinite(value)
-            ? Math.min(high, Math.max(low, value)) : fallback
-    }
-
-    Commons.Translations { id: strings; directory: Qt.resolvedUrl("i18n") }
-    function notify(key) {
-        Quickshell.execDetached(["omarchy-notification-send", "--transient", "-t", "2800",
-                                 strings.t("title"), strings.t(key)])
-    }
-    function open(payload) { notify("shareWarning") }
-    Connections {
-        target: Hyprland
-        function onRawEvent(event) {
-            if (event.name === "screencast" && event.data.split(",")[0] === "1"
-                    && Date.now() - root.lastNotice > 10000) {
-                root.lastNotice = Date.now()
-                root.notify("captureStarted")
-            }
-        }
-    }
-
-    FileView {
-        id: config
-        path: Quickshell.env("HOME") + "/.config/omarchy/shell.json"
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: {
-            try {
-                root.settings = (JSON.parse(text()).plugins || []).find(entry => entry.id === root.pluginId) || {}
-            } catch (error) {
-                console.warn("Privacy Spotlight settings:", error)
-            }
-        }
-    }
-
-    Socket {
-        id: socket
-        path: Quickshell.env("XDG_RUNTIME_DIR") + "/hypr/" + Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") + "/.socket.sock"
-        onConnectionStateChanged: if (connected) { write("j/cursorpos"); flush() }
-        parser: SplitParser {
-            splitMarker: "}"
-            onRead: data => {
-                const {x, y} = JSON.parse(data + "}")
-                socket.connected = false
-                if (x !== root.pointer.x || y !== root.pointer.y) {
-                    root.pointer = Qt.point(x, y)
-                    root.lastMove = Date.now()
-                    poll.interval = 17
-                } else if (Date.now() - root.lastMove > 1000) {
-                    poll.interval = 125
-                }
-            }
-        }
-    }
-    Timer {
-        id: poll
-        interval: 17
-        repeat: true
-        running: true
-        triggeredOnStart: true
-        onTriggered: if (!socket.connected) socket.connected = true
-    }
+    readonly property bool band: config.shape === "band"
 
     Variants {
         model: Quickshell.screens

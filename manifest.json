@@ -2,14 +2,23 @@
   "schemaVersion": 1,
   "id": "grainfire.privacy-spotlight",
   "name": "Privacy Spotlight",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "grainfire",
   "license": "MIT",
   "description": "Black out the desktop outside a circle or reading band around the pointer",
   "kinds": [
-    "overlay"
+    "overlay",
+    "bar-widget"
   ],
   "entryPoints": {
-    "overlay": "Spotlight.qml"
+    "overlay": "Spotlight.qml",
+    "barWidget": "SpotlightWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Privacy Spotlight",
+    "description": "Toggle or adjust the pointer spotlight",
+    "category": "Tools",
+    "allowMultiple": false,
+    "defaultSection": "right"
   }
 }

@@ -1,5 +1,9 @@
 {
-  "title": "Privacy Spotlight",
-  "shareWarning": "The spotlight is visible in screen shares and screenshots.",
-  "captureStarted": "Screen capture detected. Toggle the spotlight off to share the whole display."
+  "on": "Privacy Spotlight: on\nLeft click to turn off · Right click for settings",
+  "off": "Privacy Spotlight: off\nLeft click to turn on · Right click for settings",
+  "circle": "Circle",
+  "band": "Reading band",
+  "radius": "Radius · %1 px",
+  "height": "Band half-height · %1 px",
+  "feather": "Feather · %1 px"
 }
