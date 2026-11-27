@@ -108,7 +108,7 @@ Item {
                     const pid = lines[0].trim()
                     if (!/^[1-9][0-9]*$/.test(pid)) continue
                     reader.path = "/proc/" + pid + "/comm"
-                    const live = reader.text().trim().length > 0
+                    const live = reader.text().trim() === "Hyprland"
                     const stamp = /_(\d+)_(\d+)$/.exec(name)
                     const seconds = stamp ? Number(stamp[1]) : 0
                     const fraction = stamp ? Number(stamp[2]) : 0
@@ -127,6 +127,7 @@ Item {
                 showFiles: false
                 showDotAndDotDot: false
                 onStatusChanged: if (status === FolderListModel.Ready) Qt.callLater(scan.selectInstance)
+                Component.onCompleted: if (status === FolderListModel.Ready) Qt.callLater(scan.selectInstance)
             }
             // Release the scan even if the runtime directory disappears.
             Timer { interval: 500; running: true; onTriggered: discovery.active = false }

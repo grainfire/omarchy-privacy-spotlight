@@ -17,11 +17,13 @@ A privacy overlay for [Omarchy](https://omarchy.org). It blacks out your screens
 omarchy plugin add https://github.com/grainfire/omarchy-privacy-spotlight.git --enable
 ```
 
-This adds a spotlight icon to the right side of your bar. If it doesn't appear, put it there with:
+The installer asks which bar section should hold the icon, with the right section pre-selected. Add `--yes` to use the right section without being asked. To re-add a missing icon on the right, run:
 
 ```sh
 omarchy bar put grainfire.privacy-spotlight --section right
 ```
+
+To move an existing icon to the right, run `omarchy bar move grainfire.privacy-spotlight --section right`.
 
 ### Keyboard shortcut (optional)
 
@@ -31,7 +33,13 @@ Add a binding to `~/.config/hypr/bindings.lua`, using any key combination that's
 o.bind("SUPER + CTRL + ALT + SHIFT + P", "Privacy Spotlight", "omarchy-shell shell toggle grainfire.privacy-spotlight '{}'")
 ```
 
-The plugin is enabled by its bar icon. If you remove the icon from the bar, the shortcut stops working too. To use the shortcut without the icon, add `{ "id": "grainfire.privacy-spotlight" }` to the top-level `plugins` array in `~/.config/omarchy/shell.json`.
+The plugin is enabled by its bar icon. If you remove the icon from the bar, the shortcut stops working too. To use the shortcut without the icon, add an entry to the top-level `plugins` array in `~/.config/omarchy/shell.json`. It can hold your settings too. For example, this entry opens a reading band with a half-height of 150 logical pixels:
+
+```json
+{ "id": "grainfire.privacy-spotlight", "shape": "band", "radius": 150 }
+```
+
+If both entries exist, the spotlight uses the bar entry.
 
 ## Use
 
@@ -71,7 +79,7 @@ Your choices are saved in the plugin's bar entry in `~/.config/omarchy/shell.jso
 ## Battery use
 
 - **Off:** nothing runs. Only the bar icon exists, inside the Omarchy shell.
-- **On:** the plugin asks Hyprland for the pointer position about 60 times a second while you move the mouse, and 8 times a second when it's still.
+- **On:** the plugin asks Hyprland for the pointer position about 60 times a second while you move the mouse, and about 8 times a second after it has been still for one second.
 - **After 10 seconds without any input** (reading, locked screen, display off), it stops checking completely and starts again the moment you touch the mouse or keyboard.
 
 ## Limitations
@@ -82,11 +90,11 @@ Your choices are saved in the plugin's bar entry in `~/.config/omarchy/shell.jso
 
 ## Development
 
-Clone the repository anywhere and edit it there. `dev-sync.sh` copies the plugin's files into `~/.config/omarchy/plugins/grainfire.privacy-spotlight/`, where the shell reloads them straight away:
+Clone the repository anywhere and edit it there. `dev-sync.sh` copies the plugin's files into `~/.config/omarchy/plugins/grainfire.privacy-spotlight/`, where the shell watches for plugin changes:
 
 ```sh
 ./dev-sync.sh          # sync once
-./dev-sync.sh --watch  # sync on every save (needs inotify-tools)
+./dev-sync.sh --watch  # sync runtime file changes (needs inotify-tools)
 ```
 
 It also builds `SpotlightLabels.qml` from the translation files in `i18n/`, runs `omarchy plugin validate`, and removes files from the installed copy that are no longer in the repository. If you installed with `omarchy plugin add`, remove that copy first (`omarchy plugin remove grainfire.privacy-spotlight`).

@@ -21,7 +21,8 @@ FileView {
         try {
             const json = JSON.parse(text())
             const entries = [].concat(...Object.values(json?.bar?.layout || {}))
-            entry = entries.find(e => e?.id === pluginId) || {}
+            const plugins = Array.isArray(json?.plugins) ? json.plugins : []
+            entry = entries.find(e => e?.id === pluginId) || plugins.find(e => e?.id === pluginId) || {}
         } catch (error) {
             console.warn("Privacy Spotlight settings:", error)
         }

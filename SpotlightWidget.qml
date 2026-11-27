@@ -75,13 +75,11 @@ BarWidget {
                 if (Math.sign(root.wheelRemainder) !== direction) root.wheelRemainder = 0
                 const total = root.wheelRemainder + delta
                 const notches = Math.floor(Math.abs(total) / 120)
-                root.wheelRemainder = total % 120
-                let index = root.nearest
-                for (let i = 0; i < notches; i++) {
-                    index += direction
-                    if (index < 0 || index >= root.steps.length) break
-                    root.save("radius", root.steps[index])
-                }
+                const last = root.steps.length - 1
+                const target = Math.max(0, Math.min(last, root.nearest + direction * notches))
+                const atLimit = direction > 0 ? target === last : target === 0
+                root.wheelRemainder = atLimit ? 0 : total % 120
+                if (target !== root.nearest) root.save("radius", root.steps[target])
             }
         }
     }
