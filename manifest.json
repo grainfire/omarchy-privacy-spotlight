@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "grainfire.privacy-spotlight",
+  "name": "Privacy Spotlight",
+  "version": "1.0.0",
+  "author": "grainfire",
+  "description": "Black out the desktop outside a circle or reading band around the pointer",
+  "kinds": ["overlay"],
+  "entryPoints": { "overlay": "Spotlight.qml" }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Privacy Spotlight shell.json plugin entry",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "const": "grainfire.privacy-spotlight" },
+    "shape": { "enum": ["circle", "band"], "default": "circle" },
+    "radius": { "type": "number", "minimum": 4, "maximum": 2048, "default": 120, "description": "Clear radius or band half-height in logical pixels." },
+    "feather": { "type": "number", "minimum": 0, "maximum": 1024, "default": 32, "description": "Additional fade width in logical pixels." }
+  }
+}
