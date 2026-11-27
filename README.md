@@ -42,3 +42,7 @@ Quickshell can't see the global pointer position, so while the spotlight is on i
 
 - The overlay appears in screen shares and screenshots. A screencast starting only shows a notification; it doesn't turn the spotlight off.
 - It's a deterrent, not real security: the bright area is still readable.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

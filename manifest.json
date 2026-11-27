@@ -4,7 +4,12 @@
   "name": "Privacy Spotlight",
   "version": "1.0.0",
   "author": "grainfire",
+  "license": "MIT",
   "description": "Black out the desktop outside a circle or reading band around the pointer",
-  "kinds": ["overlay"],
-  "entryPoints": { "overlay": "Spotlight.qml" }
+  "kinds": [
+    "overlay"
+  ],
+  "entryPoints": {
+    "overlay": "Spotlight.qml"
+  }
 }
